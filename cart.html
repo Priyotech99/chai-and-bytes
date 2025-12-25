@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart - Tripathi chai & bytes</title>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* small extra styles scoped to cart page */
+    .coupon-box { display:flex; gap:8px; align-items:center; margin: 14px 0; }
+    .coupon-input { flex:1; padding:8px 10px; border-radius:6px; border:1px solid #ccc; }
+    .apply-btn { padding:8px 12px; background:#0f1111; color:white; border-radius:6px; cursor:pointer; }
+    .coupon-msg { font-size:0.95rem; margin-top:8px; color:#2a7a2a; }
+    .payment-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; }
+    .payment-content { background:white; padding:18px; border-radius:10px; width:90%; max-width:420px; text-align:left; }
+    .pay-option { padding:10px; border-radius:8px; border:1px solid #ddd; margin:8px 0; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+    .upi-buttons { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .upi-buttons button { padding:8px 10px; border-radius:6px; cursor:pointer; border:none; background:#f3f3f3; }
+    .order-success { background:#dff0d8; color:#235; padding:12px; border-radius:8px; margin-top:12px; display:none; }
+    .bracket { border:2px dashed #222f3d; padding:12px; border-radius:8px; display:flex; align-items:center; gap:10px; background:#fff; }
+    .coupon-applied { color:#2a7a2a; font-weight:600; margin-top:8px;}
+  </style>
+</head>
+<body>
+
+<div class="cart-container">
+  <h1>Your Cart</h1>
+  <div id="cartItems"></div>
+
+  <div class="bracket">
+    <div style="font-weight:700;">Apply Coupon</div>
+    <div style="flex:1;">
+      <div class="coupon-box">
+        <input id="couponInput" class="coupon-input" placeholder="Enter coupon code (e.g. COUPON100 )">
+        <button id="applyCoupon" class="apply-btn">Apply</button>
+      </div>
+      <div id="couponMsg" class="coupon-msg"></div>
+    </div>
+  </div>
+
+  <div class="cart-total">Total: ₹ <span id="cartTotal">0</span></div>
+  <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
+
+  <div id="orderSuccess" class="order-success">Your order is placed. Thank you for choosing us 🙂</div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="payment-modal">
+  <div class="payment-content">
+    <h3>Select Payment Method</h3>
+    <div class="pay-option" id="optUPI">
+      <div><i class="fa-solid fa-wallet"></i> UPI</div>
+      <div><i class="fa-solid fa-chevron-right"></i></div>
+    </div>
+
+    <div class="pay-option" id="optCOD">
+      <div><i class="fa-solid fa-money-bill-wave"></i> Cash on Delivery</div>
+      <div><i class="fa-solid fa-chevron-right"></i></div>
+    </div>
+
+    <div id="upiSection" style="display:none;">
+      <div style="margin-top:10px;">Choose a UPI provider</div>
+      <div class="upi-buttons">
+        <button id="paytmBtn"><i class="fa-brands fa-paypal"></i> Paytm</button>
+        <button id="phonepeBtn"><i class="fa-solid fa-mobile-screen-button"></i> PhonePe</button>
+        <button id="gpayBtn"><i class="fa-brands fa-google"></i> Google Pay</button>
+        <button id="otherUpiToggle">Other UPI</button>
+      </div>
+
+      <div id="otherUpiBox" style="display:none; margin-top:10px;">
+        <input id="otherUpiInput" class="coupon-input" placeholder="Enter UPI ID (eg: name@bank)">
+        <button id="otherUpiPay" class="apply-btn" style="margin-top:8px;">Pay</button>
+      </div>
+    </div>
+
+    <div style="text-align:right; margin-top:12px;">
+      <button id="closePayment" class="apply-btn" style="background:#777;">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Cart handling for cart.html (uses same localStorage key 'tripathi_cart' as index) */
+
+function getCart(){
+  const raw = localStorage.getItem('tripathi_cart');
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveCart(cart){
+  localStorage.setItem('tripathi_cart', JSON.stringify(cart));
+  renderCart();
+}
+
+// Helper: compute total (raw) without coupon
+function computeRawTotal(){
+  const cart = getCart();
+  return cart.reduce((s,i)=> s + i.qty * i.price, 0);
+}
+
+// Render cart on this page
+function renderCart(){
+  const cart = getCart();
+  const cartDiv = document.getElementById('cartItems');
+  const totalSpan = document.getElementById('cartTotal');
+
+  cartDiv.innerHTML = '';
+
+  if(cart.length === 0){
+    cartDiv.innerHTML = `<h2 style="text-align:center;color:#555;">Your cart is empty</h2>`;
+    totalSpan.textContent = 0;
+    return;
+  }
+
+  let total = 0;
+
+  cart.forEach(item => {
+    total += item.qty * item.price;
+
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+
+    div.innerHTML = `
+      <img src="${item.img}" alt="${item.name}">
+      <div class="item-info">
+        <h3>${item.name}</h3>
+        <p>Price: ₹${item.price}</p>
+      </div>
+
+      <div class="qty-box">
+        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
+        <span>${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+      </div>
+
+      <button class="remove-btn" onclick="removeItem('${item.id}')">Remove</button>
+    `;
+
+    cartDiv.appendChild(div);
+  });
+
+  // If coupon applied, reflect it
+  const couponStored = JSON.parse(localStorage.getItem('tripahi_coupon') || 'null');
+  let displayTotal = total;
+  if(couponStored){
+    if(couponStored.code === 'ITS50'){
+      displayTotal = Math.round(total * 0.5); // 50% off
+    } else if(couponStored.code === 'SALONIBABY'){
+      displayTotal = 0; // 100% off
+    }
+    // also show small applied message below bracket
+    showAppliedCouponMessage(couponStored.code);
+  } else {
+    clearAppliedCouponMessage();
+  }
+
+  totalSpan.textContent = displayTotal.toFixed(0);
+}
+
+// Quantity change and remove
+function changeQty(id, change){
+  let cart = getCart();
+  const item = cart.find(p => p.id === id);
+  if(!item) return;
+  item.qty += change;
+  if(item.qty <= 0){
+    cart = cart.filter(p => p.id !== id);
+  }
+  saveCart(cart);
+}
+
+function removeItem(id){
+  let cart = getCart().filter(p => p.id !== id);
+  saveCart(cart);
+}
+
+// Coupon logic: ITS50 => 50% off, SALONIBABY => 100% off
+document.getElementById('applyCoupon').addEventListener('click', () => {
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  const msg = document.getElementById('couponMsg');
+  const rawTotal = computeRawTotal();
+
+  if(rawTotal === 0){
+    msg.style.color = '#a33';
+    msg.textContent = 'Cart is empty.';
+    return;
+  }
+
+  if(!code){
+    msg.style.color = '#a33';
+    msg.textContent = 'Please enter a coupon code.';
+    return;
+  }
+
+  if(code === 'ITS50'){
+    // 50% off
+    localStorage.setItem('tripahi_coupon', JSON.stringify({code: 'ITS50'}));
+    const newTotal = Math.round(rawTotal * 0.5);
+    document.getElementById('cartTotal').textContent = newTotal;
+    msg.style.color = '#2a7a2a';
+    msg.textContent = 'Coupon has been applied.';
+    showAppliedCouponMessage('ITS50');
+  } else if(code === 'SALONIBABY'){
+    // 100% off
+    localStorage.setItem('tripahi_coupon', JSON.stringify({code: 'SALONIBABY'}));
+    document.getElementById('cartTotal').textContent = 0;
+    msg.style.color = '#2a7a2a';
+    msg.textContent = 'Coupon has been applied.';
+    showAppliedCouponMessage('SALONIBABY');
+  } else {
+    msg.style.color = '#a33';
+    msg.textContent = 'Invalid coupon code.';
+  }
+});
+
+// show/hide small applied coupon message under bracket
+function showAppliedCouponMessage(code){
+  let msgElem = document.getElementById('appliedCouponMsg');
+  if(!msgElem){
+    msgElem = document.createElement('div');
+    msgElem.id = 'appliedCouponMsg';
+    msgElem.className = 'coupon-applied';
+    const bracket = document.querySelector('.bracket');
+    bracket.parentNode.insertBefore(msgElem, bracket.nextSibling);
+  }
+  if(code === 'ITS50') msgElem.textContent = 'Applied: ITS50 (50% off)';
+  else if(code === 'SALONIBABY') msgElem.textContent = 'Applied: SALONIBABY (100% off)';
+}
+
+// remove applied message
+function clearAppliedCouponMessage(){
+  const el = document.getElementById('appliedCouponMsg');
+  if(el) el.remove();
+}
+
+// Checkout flow: show payment modal
+const checkoutBtn = document.getElementById('checkoutBtn');
+const paymentModal = document.getElementById('paymentModal');
+const optUPI = document.getElementById('optUPI');
+const optCOD = document.getElementById('optCOD');
+const upiSection = document.getElementById('upiSection');
+const closePayment = document.getElementById('closePayment');
+const orderSuccess = document.getElementById('orderSuccess');
+
+checkoutBtn.addEventListener('click', () => {
+  const cart = getCart();
+  if(cart.length === 0){
+    alert('Your cart is empty.');
+    return;
+  }
+  paymentModal.style.display = 'flex';
+});
+
+closePayment.addEventListener('click', () => {
+  paymentModal.style.display = 'none';
+  upiSection.style.display = 'none';
+  document.getElementById('otherUpiBox').style.display = 'none';
+});
+
+// UPI
+optUPI.addEventListener('click', () => {
+  upiSection.style.display = 'block';
+});
+optCOD.addEventListener('click', () => {
+  paymentModal.style.display = 'none';
+  // Place order for COD:
+  placeOrder('COD');
+});
+
+// UPI provider buttons
+document.getElementById('paytmBtn').addEventListener('click', ()=> placeOrder('Paytm'));
+document.getElementById('phonepeBtn').addEventListener('click', ()=> placeOrder('PhonePe'));
+document.getElementById('gpayBtn').addEventListener('click', ()=> placeOrder('GooglePay'));
+document.getElementById('otherUpiToggle').addEventListener('click', ()=> {
+  const box = document.getElementById('otherUpiBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('otherUpiPay').addEventListener('click', ()=> {
+  const upi = document.getElementById('otherUpiInput').value.trim();
+  if(!upi){ alert('Enter UPI ID'); return; }
+  placeOrder('UPI:' + upi);
+});
+
+function placeOrder(method){
+  // For demo: simply show success message and clear cart + coupon
+  orderSuccess.style.display = 'block';
+  orderSuccess.textContent = `Your order is placed. Thank you for choosing us 🙂 Payment: ${method}`;
+  // clear cart and coupon
+  localStorage.removeItem('tripathi_cart');
+  localStorage.removeItem('tripahi_coupon');
+
+  // update UI after short delay
+  setTimeout(()=> {
+    renderCart();
+    document.getElementById('cartTotal').textContent = 0;
+    const couponMsg = document.getElementById('couponMsg');
+    if(couponMsg) couponMsg.textContent = '';
+    clearAppliedCouponMessage();
+  }, 500);
+
+  paymentModal.style.display = 'none';
+  upiSection.style.display = 'none';
+}
+
+// initial render
+renderCart();
+</script>
+
+</body>
+</html>

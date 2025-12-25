@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TRIPATHI ji chai & bytes</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+  <header>
+    <div class="navbar">
+      <div class="nav-logo border">
+        <div class="logo"></div>
+      </div>
+
+      <div class="navbar-address border">
+        <p class="address-first">Location</p>
+        <div class="add-icon">
+          <i class="fa-solid fa-location-dot"></i>
+          <p class="address-second">India</p>
+        </div>
+      </div>
+
+      <div class="nav-search">
+        <select class="search-select">
+          <option>All</option>
+        </select>
+        <input placeholder="Search your meal" class="search-input" id="searchInput">
+        <div class="search-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+      </div>
+
+      <div class="navsign-in border" id="bindBtn">
+        <p><span>Bind with us</span></p>
+        <p class="nav-second">About Accounts</p>
+      </div>
+
+      <div class="nav-return border" id="feedbackNavBtn">
+        <p><span>Your feedback</span></p>
+        <p class="nav-order">&Orders</p>
+      </div>
+
+      <div class="nav-cart border" id="openCart">
+        <i class="fa-solid fa-pizza-slice"></i>
+        <span>Your Cart (<span id="cartCount">0</span>)</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-all"><p><i class="fa-solid fa-bars"></i> All</p></div>
+      <div class="panel-ops">
+        <p>Today's Special</p>
+        <p>Customer Service</p>
+        <p>Free coupon code</p>
+        <p>Registry</p>
+        <p>Sells</p>
+      </div>
+      <div class="panel-deals">
+        <i class="fa-solid fa-burger"></i>
+        GET YOUR BURGERS
+      </div>
+    </div>
+  </header>
+
+  <div class="hero-section">
+    <div class="img1"></div>
+    <div class="img2"></div>
+  </div>
+
+  <div class="hero-msg">
+    You are on <b>TRIPATHI chai & bytes</b> — order all over India with instant delivery
+    <a href="#menu">Click here to explore the menu</a>
+  </div>
+
+  <div class="special"><h1>TODAY'S DELIGHT</h1></div>
+
+  <div class="shop-section" id="menu"></div>
+
+  <div class="item-name" id="itemNames"></div>
+
+  <!-- Sliding drawer that appears when an item is added -->
+  <div id="miniDrawer" class="mini-drawer" aria-hidden="true">
+    <div class="mini-drawer-content">
+      <div class="mini-item">
+        <img id="miniImg" src="" alt="" />
+        <div class="mini-info">
+          <div id="miniName"></div>
+          <div id="miniPrice"></div>
+        </div>
+      </div>
+      <div class="mini-actions">
+        <button id="viewCartBtn" class="order-btn small">View Your Cart</button>
+      </div>
+      <button id="miniClose" class="mini-close" aria-label="Close drawer">&times;</button>
+    </div>
+  </div>
+
+  <!-- Feedback Modal (for 'Your feedback' nav) -->
+  <div id="feedbackModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="feedbackClose">&times;</span>
+      <h2>Share your feedback</h2>
+      <textarea id="feedbackText" placeholder="Write your feedback..." style="width:100%;height:120px;padding:10px;border-radius:6px;border:1px solid #ccc"></textarea>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+        <button id="feedbackCancel" class="apply-btn" style="background:#777;">Cancel</button>
+        <button id="feedbackSubmit" class="apply-btn">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback toast/message -->
+  <div id="feedbackToast" class="feedback-toast" style="display:none;">
+    Your feedback has been submitted. Thanks for advising!
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="foot-panel">Back on top</div>
+
+    <div class="foot-panel2">
+      <ul>
+        <p>Know about us</p>
+        <a>Our Career</a>
+        <a>Blogs</a>
+        <a>Tripathi Delights</a>
+        <a>Investors</a>
+        <a>Ratings</a>
+        <a>Feedback</a>
+      </ul>
+
+      <ul>
+        <p>Payments</p>
+        <a>Business cards</a>
+        <a>UPI</a>
+        <a>Cash on delivery</a>
+      </ul>
+
+      <ul>
+        <p>Quality</p>
+        <a>Specialised Chefs</a>
+        <a>Proper Hygiene</a>
+        <a>Sanitised</a>
+        <a>100% refund on wrong delivery</a>
+      </ul>
+    </div>
+
+    <div class="foot-panel3">
+      <div class="footer-logo"></div>
+    </div>
+
+    <div class="foot-panel4">
+      <div class="pages">
+        <a>Conditions</a>
+        <a>Privacy</a>
+        <a>Your ads privacy choices</a>
+      </div>
+
+      <div class="socials">
+        <i class="fa-brands fa-instagram"></i>
+        <i class="fa-brands fa-facebook"></i>
+        <i class="fa-brands fa-x-twitter"></i>
+        <i class="fa-brands fa-youtube"></i>
+      </div>
+
+      <div class="copyright">
+        2004-2025, Tripathi chai & bytes, Inc or its affiliates
+      </div>
+    </div>
+  </footer>
+
+  <!-- Sign-in Modal (unchanged) -->
+  <div id="signinModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>Sign in / Bind with us</h2>
+      <p>Choose one:</p>
+
+      <div class="signin-buttons">
+        <button class="social fb"><i class="fa-brands fa-facebook"></i> Continue with Facebook</button>
+        <button class="social gm"><i class="fa-brands fa-google"></i> Continue with Gmail</button>
+        <button class="social ph"><i class="fa-solid fa-phone"></i> Continue with Phone</button>
+      </div>
+
+      <p style="font-size:0.9rem;color:#666">Note: This is a demo UI — real auth not implemented.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
